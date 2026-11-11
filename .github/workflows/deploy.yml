@@ -1,0 +1,91 @@
+name: Build and deploy blog
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: blog-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out blog source
+        uses: actions/checkout@v6
+        with:
+          path: blog_source
+          persist-credentials: false
+
+      - name: Check out original site for recovery checks
+        uses: actions/checkout@v6
+        with:
+          repository: EssieYiu/EssieYiu.github.io
+          ref: 73d4298b6a154fd44f6ddaee3d34f2526b11ba58
+          path: EssieYiu.github.io
+          persist-credentials: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version-file: blog_source/.nvmrc
+          cache: npm
+          cache-dependency-path: blog_source/package-lock.json
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        working-directory: blog_source
+        run: |
+          npm ci
+          python -m pip install -r tools/requirements.txt
+
+      - name: Build and validate restored articles
+        working-directory: blog_source
+        run: |
+          npm run build
+          npm run check
+
+      - name: Check deployment credential
+        id: credential
+        env:
+          DEPLOY_KEY: ${{ secrets.BLOG_DEPLOY_KEY }}
+        run: |
+          if [ -z "$DEPLOY_KEY" ]; then
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+            echo "::warning::Build passed; deployment skipped. Add the BLOG_DEPLOY_KEY repository secret."
+            echo 'Build passed. Deployment is not enabled: add BLOG_DEPLOY_KEY as described in README.md.' >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Configure repository deploy key
+        if: steps.credential.outputs.ready == 'true'
+        env:
+          DEPLOY_KEY: ${{ secrets.BLOG_DEPLOY_KEY }}
+        run: |
+          install -d -m 700 ~/.ssh
+          printf '%s\n' "$DEPLOY_KEY" > ~/.ssh/blog_pages_deploy
+          chmod 600 ~/.ssh/blog_pages_deploy
+          # GitHub publishes these host keys over its authenticated HTTPS API.
+          curl --fail --silent --show-error https://api.github.com/meta | python -c 'import json,sys; print("\n".join("github.com " + key for key in json.load(sys.stdin)["ssh_keys"]))' > ~/.ssh/blog_pages_known_hosts
+
+      - name: Publish generated site to gh-pages
+        if: steps.credential.outputs.ready == 'true'
+        working-directory: blog_source
+        env:
+          GIT_SSH_COMMAND: ssh -i /home/runner/.ssh/blog_pages_deploy -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes -o UserKnownHostsFile=/home/runner/.ssh/blog_pages_known_hosts
+        run: bash tools/publish.sh
+
+      - name: Remove deployment key
+        if: always()
+        run: rm -f ~/.ssh/blog_pages_deploy

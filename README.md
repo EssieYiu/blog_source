@@ -57,22 +57,38 @@ npm run check
 - 已修复旧图片路径中的 Jekyll 模板残留、重复目录和 6 处 `.jp` 后缀；将公式中的字面量 `#` 转义。
 - Markdown 从已发布 HTML 提取，保留正文、代码及已渲染页面中的 TeX；原稿中已丢失的信息无法凭空还原。旧网页本身若已有排版或公式内容错误，仍需逐篇复核。
 
-## 发布到原 GitHub Pages
+## 自动发布到原 GitHub Pages
 
-当前没有配置部署目标，`npm run deploy` 不会发布到远端。先在 GitHub 仓库 Settings → Pages 确认实际发布方式。
+流程为：推送 `blog_source/main` → GitHub Actions 安装锁定依赖 → 构建并校验 → 将 `public/` 推送到 `EssieYiu.github.io/gh-pages` → GitHub Pages 更新博客。只发布生成目录；草稿备份和源码不会复制到发布分支。原 `master` 保留作为旧站备份。
 
-若继续使用 Git 分支发布：在独立的源码仓库或源码分支中保存本工程，确认预览后再将 `_config.yml` 的 `deploy: {}` 替换为：
+工作流：`.github/workflows/deploy.yml`；发布脚本：`tools/publish.sh`。也可以在 Actions → Build and deploy blog → Run workflow 手动运行。未添加部署密钥时，工作流仅构建、校验并提示跳过发布。
 
-```yaml
-deploy:
-  type: git
-  repo: git@github.com:EssieYiu/EssieYiu.github.io.git
-  branch: master  # 仅在 Pages 确认发布分支就是 master 时使用
+### 首次启用（仅需一次）
+
+1. 为发布创建一对专用 SSH 密钥。此次已在本机生成：公钥 `/root/.ssh/blog_pages_deploy.pub`，私钥 `/root/.ssh/blog_pages_deploy`。私钥未写入任何 Git 仓库。换电脑后也可用 `ssh-keygen -t ed25519 -f blog_pages_deploy -N ""` 重新生成一对，并同步替换以下两处。
+2. 在 **EssieYiu.github.io** → Settings → Deploy keys → Add deploy key：标题可填 `blog_source auto deploy`，Key 粘贴**公钥**，勾选 **Allow write access**。
+3. 在 **blog_source** → Settings → Secrets and variables → Actions → New repository secret：Name 填 **BLOG_DEPLOY_KEY**，Secret 粘贴**私钥完整内容**（包括 BEGIN/END 行）。不要将私钥作为普通文件提交。
+4. 在 **EssieYiu.github.io** → Settings → Pages：Source 选 **Deploy from a branch**，Branch 选 **gh-pages**，目录选 **/(root)**，Save。若还没有 `gh-pages`，先在源码仓库 Actions 手动运行一次工作流，成功后再选。
+5. 在源码仓库 Actions 查看工作流，确认发布成功；在博客仓库 Actions 查看 Pages 构建，完成后访问 https://essieyiu.github.io/ 。
+
+此处用部署密钥执行跨仓库推送，不需要把默认 `GITHUB_TOKEN` 权限调大，也不需要把源码仓库开启 Pages。
+
+### 以后更新
+
+```bash
+npm run new -- "文章标题"
+# 编辑 source/_posts/ 下的文章并预览
+npm run server
+# 完成后保存并推送；随后自动发布
+
+git add .
+git commit -m "新增文章"
+git push
 ```
 
-配置好 GitHub SSH 认证后执行 `npm run deploy`。部署会用本工程生成的站点替换目标分支内容，因此必须先把旧站和源码分别备份好，再发布。不要直接把源码推到当前存放成品的 master 分支。
+若 Actions 失败，打开失败步骤的日志。构建或校验失败时不会发布。只有本次恢复固定的 8 篇文章会与旧站对比；新增文章正常参与构建，不要求出现在旧站恢复清单里。
 
-也可以改用 GitHub Actions 自动构建，但需要先确定源码要保存在哪个仓库、Pages 使用何种发布方式。
+本地 `_config.yml` 仍保留 `deploy: {}`，日常使用自动发布即可，不需要执行 `npm run deploy`。
 
 ## 保存源码
 
