@@ -1,0 +1,46 @@
+title: Essie's Blog
+subtitle: 得失工拙，不计也
+description: 个人学习记录
+keywords:
+author: Essie
+language: zh-CN
+timezone: Asia/Shanghai
+url: https://essieyiu.github.io
+root: /
+permalink: :year/:month/:day/:title/
+pretty_urls:
+  trailing_index: false
+  trailing_html: false
+source_dir: source
+public_dir: public
+tag_dir: tags
+archive_dir: archives
+category_dir: categories
+new_post_name: :year-:month-:day-:title.md
+default_layout: post
+render_drafts: false
+post_asset_folder: true
+relative_link: false
+future: false
+index_generator:
+  path: ''
+  per_page: 10
+  order_by: -date
+per_page: 10
+pagination_dir: page
+theme: next
+syntax_highlighter: highlight.js
+highlight:
+  enable: true
+  line_number: true
+  auto_detect: false
+  tab_replace: ''
+# Keep recovered static assets byte-for-byte (including any .md-shaped filenames).
+skip_render:
+  - '2019/**/*'
+  - '2020/**/*'
+  - '2022/**/*'
+  - 'assets/**/*'
+  - 'images/**/*'
+# Deployment remains deliberately unconfigured until the actual Pages source is verified.
+deploy: {}

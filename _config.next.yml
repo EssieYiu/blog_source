@@ -1,0 +1,23 @@
+scheme: Gemini
+since: 2019
+menu:
+  home: / || fa fa-home
+  about: /about/ || fa fa-user
+  tags: /tags/ || fa fa-tags
+  categories: /categories/ || fa fa-th
+  archives: /archives/ || fa fa-archive
+avatar:
+  url: /images/avatar.gif
+  rounded: false
+  rotated: false
+social:
+  GitHub: https://github.com/EssieYiu || fab fa-github
+math:
+  every_page: false
+  mathjax:
+    enable: false
+    tags: none
+  katex:
+    enable: false
+gitalk:
+  enable: false

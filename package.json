@@ -1,0 +1,39 @@
+{
+  "name": "essie-blog-source",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Recovered Hexo source for essieyiu.github.io",
+  "engines": {
+    "node": ">=24 <25"
+  },
+  "scripts": {
+    "new": "hexo new",
+    "server": "hexo server",
+    "clean": "hexo clean",
+    "build": "hexo generate",
+    "check": "python tools/check_recovery.py",
+    "deploy": "hexo deploy --generate"
+  },
+  "hexo": {
+    "version": "8.1.2"
+  },
+  "dependencies": {
+    "hexo": "8.1.2",
+    "hexo-cli": "4.3.2",
+    "hexo-deployer-git": "4.0.0",
+    "hexo-generator-archive": "2.0.0",
+    "hexo-generator-category": "2.0.0",
+    "hexo-generator-index": "4.0.0",
+    "hexo-generator-tag": "2.0.0",
+    "hexo-renderer-stylus": "3.0.1",
+    "hexo-server": "3.0.0",
+    "hexo-theme-next": "8.29.1",
+    "hexo-util": "4.0.0",
+    "markdown-it": "15.0.3",
+    "markdown-it-anchor": "10.1.0",
+    "markdown-it-mathjax3": "5.2.0"
+  },
+  "overrides": {
+    "markdown-it": "15.0.3"
+  }
+}
